@@ -1,40 +1,43 @@
 import socket
 import threading
 
-def envoie():
+def com(conn, clients, username):
     while True:
-        message = str(input("message: "))
-        conn.send(message.encode())
-        if message == "arret":
-            conn.close()
-            server_socket.close()
-
-def reception():
-    while True:
-        recept = conn.recv(1024).decode()
-        print("Client: " + recept)
-        if recept == "bye":
+        try:
+            message = conn.recv(1024).decode()
+            if message == "quit":
+                break
+            broadcast(username, message)
+        except ConnectionResetError:
             break
-        if recept == "arret":
-            conn.close()
-            server_socket.close()
-    return
 
-envoie=threading.Thread(target=envoie)
-reception=threading.Thread(target=reception)
+    deconnexion(username, conn)
+
+def broadcast(sender, message):
+    for client_username, client_conn in clients.items():
+        if client_username != sender:
+            try:
+                client_conn.send(f"{sender}: {message}".encode())
+            except:
+                deconnexion(client_username, client_conn)
+
+def deconnexion(username, conn):
+    del clients[username]
+    conn.close()
+    broadcast("Serveur", f"{username} a quitté la discussion.")
+
+server_socket = socket.socket()
+server_socket.bind(('0.0.0.0', 6255))
+server_socket.listen(1)
+print("En attente de connexion...")
+
+clients = {}
 
 while True:
-    server_socket = socket.socket()
-    server_socket.bind(('0.0.0.0', 6255))
-    server_socket.listen(1)
     conn, address = server_socket.accept()
+    pseudo = conn.recv(1024).decode()
+    clients[pseudo] = conn
+    print(f"Client connecté: {pseudo}")
 
-    try:
-        envoie.start()
-        reception.start()
-        envoie.join()
-        reception.join()
-    except ConnectionResetError:
-        print("Connexion interronpue.")
-    
-
+    com_thread = threading.Thread(target=com, args=(conn, clients, pseudo))
+    com_thread.start()
