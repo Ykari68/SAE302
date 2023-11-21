@@ -6,7 +6,7 @@ def console(conn, clients, username):
         commande = str(input("Serveur> "))
         if commande == "kill":
             kill()
-            continue
+            pass
 
 def com(conn, clients, username):
     while True:
