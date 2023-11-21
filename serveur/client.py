@@ -16,6 +16,7 @@ def receive_messages():
         except ConnectionResetError:
             print("La connexion avec le serveur a été interrompue.")
             break
+    client_socket.close()
 
 server_address = input("Entrez l'adresse IP du serveur : ")
 server_port = int(input("Entrez le numéro de port du serveur : "))
