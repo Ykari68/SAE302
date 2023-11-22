@@ -6,7 +6,17 @@ def console(conn, clients, username):
         commande = str(input("Serveur> "))
         if commande == "kill":
             kill()
-            pass
+            continue
+        elif commande.startswith("ban"):
+            username = commande.split()[1]
+            conn = clients[username]
+            ban(username, conn)
+            continue
+        elif commande.startswith("kick"):
+            username = commande.split()[1]
+            conn = clients[username]
+            kick(username, conn)
+            continue
 
 def com(conn, clients, username):
     while True:
@@ -18,11 +28,18 @@ def com(conn, clients, username):
         except ConnectionResetError:
             break
     deconnexion(username, conn)
-
+    
 def kill():
     for client_username, client_conn in clients.items():
         deconnexion(client_username, client_conn)
 
+def kick(username, conn):
+    del clients[username]
+    conn.close()
+    broadcast("Serveur", f"{username} a été kick de la discussion.")
+
+def ban(username, conn):
+    deconnexion(username, conn)
 
 def broadcast(sender, message):
     for client_username, client_conn in clients.items():

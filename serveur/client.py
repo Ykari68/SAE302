@@ -22,6 +22,9 @@ def receive_messages():
             print("Vous avez quitté la discussion.")
             client_socket.close()
             break
+        except:
+            client_socket.close()
+            break
 
 server_address = input("Entrez l'adresse IP du serveur : ")
 server_port = int(input("Entrez le numéro de port du serveur : "))
