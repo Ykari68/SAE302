@@ -13,6 +13,10 @@ def receive_messages():
     while True:
         try:
             message = client_socket.recv(1024).decode()
+            if message.lower() == "kick":
+                client_socket.close()
+                break
+            
             print(message)
         except ConnectionResetError:
             print("La connexion avec le serveur a été interrompue.")
