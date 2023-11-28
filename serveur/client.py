@@ -13,10 +13,6 @@ def receive_messages():
     while True:
         try:
             message = client_socket.recv(1024).decode()
-            if message.lower() == "kick":
-                client_socket.close()
-                break
-            
             print(message)
         except ConnectionResetError:
             print("La connexion avec le serveur a été interrompue.")
@@ -30,8 +26,8 @@ def receive_messages():
             client_socket.close()
             break
 
-server_address = input("Entrez l'adresse IP du serveur : ")
-server_port = int(input("Entrez le numéro de port du serveur : "))
+server_address = "127.0.0.1" #input("Entrez l'adresse IP du serveur : ")
+server_port = 6255 #int(input("Entrez le numéro de port du serveur : "))
 
 client_socket = socket.socket()
 client_socket.connect((server_address, server_port))
