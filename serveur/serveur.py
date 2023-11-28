@@ -16,6 +16,7 @@ def console():
         commande = input("Serveur> ")
         if commande == "arret":
             server_socket.close()
+            break
         if commande == "kill":
             kill(clients, conn)
         elif commande.startswith("ban"):
@@ -49,13 +50,27 @@ def com(conn, clients, username):
     deconnexion(username, conn, clients)
 
 #Ici je créer toutes mes fonctions.
+def load_users_from_db():
+    try:
+        cursor = conn_db.cursor()
+        cursor.execute('SELECT username, password_hash FROM users')
+        result = cursor.fetchall()
+        users_data = {username: password_hash for username, password_hash in result}
+        return users_data
+    except Error as e:
+        print(f"Erreur lors du chargement des utilisateurs depuis la base de données: {e}")
+        return {}
+    
 def authenticate_user(username, password):
     """
     Cette fonction va nous permettre de vérifier les utilisateurs et leur mot de passe.
     """
-    username = input("Entrez votre nom d'utilisateur: ")
-    password = input("Entrez votre mot de passe: ")
-    pass
+    is_auth = False
+    if username in users:
+        if users[username] == users[password]:
+            is_auth = True
+    return is_auth
+
 #Les trois prochaines commandes sont des fonctions pour les commandes serveurs.
 def kill(clients, conn):
     """
@@ -119,9 +134,6 @@ server_socket.bind(('0.0.0.0', 6255))
 server_socket.listen(1)
 print("En attente de connexion...")
 
-clients = {} # La liste des clients connectés.
-blacklist = set() # La liste des utilisateurs bannis.
-
 #Cette partie gère la connexion à la base de données.
 try:
     conn_db = mysql.connector.connect(
@@ -133,37 +145,54 @@ try:
 
     if conn_db.is_connected():
         print('Connecté à la base de données MySQL')
+    else:
+        print('Erreur de connexion à la base de données')
 
 except Error as e:
     print(f"Erreur de connexion à la base de données: {e}")
 
+clients = {} # La liste des clients connectés.
+blacklist = set() # La liste des utilisateurs bannis.
+users = load_users_from_db() # La liste des utilisateurs.
+print(users)
+
 #Lancement de la fonction console, donc lancement du terminal.
 console_thread = threading.Thread(target=console)
 console_thread.start()
+console_thread.join()
 
 #Ici on créer une boucle pour constamment accepté les nouvelles connexions.
 while True:
-    conn, address = server_socket.accept()
-    username = conn.recv(1024).decode()
-    if username not in blacklist:
+    try:
+        conn, address = server_socket.accept()
+        username = conn.recv(1024).decode()
+        password = conn.recv(1024).decode()
+
         """
-        On vérifie si le nouvel utilisateur n'est pas banni
+        On vérifie si le nouvel utilisateur est banni ou non.
         """
-        if username in clients:
+        if username not in blacklist:
             """
-            On vérifie si le nouvel utilisateur n'est pas déjà connecté. (Utilise un pseudo déjà en cours d'utilisation)
+            On vérifie si le nouvel utilisateur n'est pas banni
             """
-            print(f"Le username {username} est déjà connecté. Refuser la connexion.")
+            if username in clients:
+                """
+                On vérifie si le nouvel utilisateur n'est pas déjà connecté. (Utilise un pseudo déjà en cours d'utilisation)
+                """
+                print(f"Le username {username} est déjà connecté. Refuser la connexion.")
+                conn.close()
+                continue
+            clients[username] = conn
+            print(f"Client connecté: {username}")
+            #Lancement de la fonction com pour gérer la nouvelle connexion.
+            com_thread = threading.Thread(target=com, args=(conn, clients, username))
+            com_thread.start()
+        else: 
+            print(f"Le username {username} est blacklisté. Refuser la connexion.")
             conn.close()
-            continue
-        clients[username] = conn
-        print(f"Client connecté: {username}")
-        #Lancement de la fonction com pour gérer la nouvelle connexion.
-        com_thread = threading.Thread(target=com, args=(conn, clients, username))
-        com_thread.start()
-    else: 
-        print(f"Le username {username} est blacklisté. Refuser la connexion.")
-        conn.close()
+    except:
+        print("Fin.")
+        break
     
 
     

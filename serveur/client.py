@@ -33,7 +33,9 @@ client_socket = socket.socket()
 client_socket.connect((server_address, server_port))
 
 username = input("Entrez votre nom d'utilisateur : ")
+password = input("Entrez votre mot de passe : ")
 client_socket.send(username.encode())
+client_socket.send(password.encode())
 
 com_thread = threading.Thread(target=com)
 receive_thread = threading.Thread(target=receive_messages)
