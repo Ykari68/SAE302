@@ -3,6 +3,7 @@ import threading
 import mysql.connector
 from mysql.connector import Error
 import bcrypt
+import sys
 
 #Ici je créer mes deux fonctions qui vont servir de thread.
 def console():
@@ -145,15 +146,15 @@ try:
 
     if conn_db.is_connected():
         print('Connecté à la base de données MySQL')
-    else:
-        print('Erreur de connexion à la base de données')
 
-except Error as e:
+except Exception as e:
     print(f"Erreur de connexion à la base de données: {e}")
+    print("Fermeture du serveur...")
+    sys.exit()
 
 clients = {} # La liste des clients connectés.
 blacklist = set() # La liste des utilisateurs bannis.
-users = load_users_from_db() # La liste des utilisateurs.
+users = load_users_from_db()
 print(users)
 
 #Lancement de la fonction console, donc lancement du terminal.
