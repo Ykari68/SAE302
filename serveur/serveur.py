@@ -4,6 +4,8 @@ import mysql.connector
 from mysql.connector import Error
 import bcrypt
 import sys
+from hashlib import sha256
+import time
 
 #Ici je créer mes deux fonctions qui vont servir de thread.
 def console():
@@ -14,24 +16,36 @@ def console():
         """
         Je créer une boucle afin de toujours pouvoir écrire des commandes
         """
-        commande = input("Serveur> ")
-        if commande == "arret":
-            server_socket.close()
-            break
-        if commande == "kill":
-            kill(clients, conn)
-        elif commande.startswith("ban"):
-            username = commande.split()[1]
-            if username in clients:
-                ban(username, conn, clients)
-            else:
-                print(f"Le username {username} n'est pas connecté.")
-        elif commande.startswith("kick"):
-            username = commande.split()[1]
-            if username in clients:
-                kick(username, conn, clients)
-            else:
-                print(f"Le username {username} n'est pas connecté.")
+        if authentification_admin() == True:
+            print("Authentication réussie.")
+            commande = input("Serveur> ")
+            if commande == "kill":
+                secondes = 10
+                while secondes > 0:
+                    broadcast("Serveur", f"Le serveur ferme dans {secondes}", clients)
+                    time.sleep(1)
+                    secondes -= 1
+                server_socket.close()
+                sys.exit()
+            elif commande.startswith("register"):
+                username = commande.split()[1]
+                password = commande.split()[2]
+                #register(username, password)
+                
+            elif commande.startswith("ban"):
+                username = commande.split()[1]
+                if username in clients:
+                    ban(username, conn, clients)
+                else:
+                    print(f"Le username {username} n'est pas connecté.")
+            elif commande.startswith("kick"):
+                username = commande.split()[1]
+                if username in clients:
+                    kick(username, conn, clients)
+                else:
+                    print(f"Le username {username} n'est pas connecté.")
+        else:
+            print("Utilisateur ou mot de passe incorrect.")
 
 def com(conn, clients, username):
     """
@@ -67,18 +81,24 @@ def authenticate_user(username, password):
     Cette fonction va nous permettre de vérifier les utilisateurs et leur mot de passe.
     """
     is_auth = False
-    if username in users:
-        if users[username] == users[password]:
-            is_auth = True
+    auth = (f"{username}: {password}")
+    if auth == users[password]:
+        is_auth = True
     return is_auth
 
-#Les trois prochaines commandes sont des fonctions pour les commandes serveurs.
-def kill(clients, conn):
-    """
-    Fonction pour virer tous les utilisateurs connectés.
-    """
-    for conn in clients.items():
-        conn.close()
+def authentification_admin():
+    nom_utilisateur_saisi = input('Nom d\'utilisateur : ')
+    mot_de_passe_saisi = sha256(input('Mot de passe : ').encode()).hexdigest()
+
+    cursor.execute('SELECT * FROM utilisateurs WHERE nom_utilisateur=%s AND mot_de_passe=%s', (nom_utilisateur_saisi, mot_de_passe_saisi))
+    utilisateur = cursor.fetchone()
+
+    if utilisateur:
+        return True
+    else:
+        return False
+
+#Les deux prochaines commandes sont des fonctions pour les commandes serveurs.
     
 def kick(username, conn, clients):  
     """
@@ -151,6 +171,7 @@ except Exception as e:
     print(f"Erreur de connexion à la base de données: {e}")
     print("Fermeture du serveur...")
     sys.exit()
+cursor = conn_db.cursor()
 
 clients = {} # La liste des clients connectés.
 blacklist = set() # La liste des utilisateurs bannis.
@@ -160,7 +181,6 @@ print(users)
 #Lancement de la fonction console, donc lancement du terminal.
 console_thread = threading.Thread(target=console)
 console_thread.start()
-console_thread.join()
 
 #Ici on créer une boucle pour constamment accepté les nouvelles connexions.
 while True:
@@ -195,5 +215,6 @@ while True:
         print("Fin.")
         break
     
+console_thread.join()
 
     
