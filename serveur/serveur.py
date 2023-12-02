@@ -20,7 +20,7 @@ def console():
             print("Authentication réussie.")
             commande = input("Serveur> ")
             if commande == "kill":
-                secondes = 10
+                secondes = 3
                 while secondes > 0:
                     broadcast("Serveur", f"Le serveur ferme dans {secondes}", clients)
                     time.sleep(1)
@@ -30,7 +30,7 @@ def console():
             elif commande.startswith("register"):
                 username = commande.split()[1]
                 password = commande.split()[2]
-                #register(username, password)
+                register(username, password, conn_db)
                 
             elif commande.startswith("ban"):
                 username = commande.split()[1]
@@ -51,40 +51,51 @@ def com(conn, clients, username):
     """
      La fonction com se lance en tant que thread dès qu'une communication avec un client se fait. Donc un client = un thread com. La fonction gère les clients.
     """
-    while True:
-        """
-        La boucle ici sert à perpétuellement recevoir des messages de la part de n'importe quel client.
-        """
-        try:
-            message = conn.recv(1024).decode()
-            if message == "quit":
-                break
-            broadcast(username, message, clients)
-        except (ConnectionResetError, ConnectionAbortedError):
-            break
-    deconnexion(username, conn, clients)
+    if authentification_user(username, password) == True:
+            conn.send("Authentification réussie.".encode())
+            while True:
+                """
+                La boucle ici sert à perpétuellement recevoir des messages de la part de n'importe quel client.
+                """
+                try:
+                    message = conn.recv(1024).decode()
+                    if message == "quit":
+                        break
+                    broadcast(username, message, clients)
+                except (ConnectionResetError, ConnectionAbortedError):
+                    break
+            deconnexion(username, conn, clients)
+    else:
+        conn.send("Authentication non réussie.".encode())
+        deconnexion(username, conn, clients)
 
 #Ici je créer toutes mes fonctions.
-def load_users_from_db():
+
+def register(username, password, conn_db):
+    #Ajout d'un utilisateur
     try:
-        cursor = conn_db.cursor()
-        cursor.execute('SELECT username, password_hash FROM users')
-        result = cursor.fetchall()
-        users_data = {username: password_hash for username, password_hash in result}
-        return users_data
-    except Error as e:
-        print(f"Erreur lors du chargement des utilisateurs depuis la base de données: {e}")
-        return {}
-    
-def authenticate_user(username, password):
+        nom_utilisateur = username
+        mot_de_passe = sha256(password.encode()).hexdigest()  # Hashage du mot de passe
+        cursor.execute('INSERT INTO utilisateurs (nom_utilisateur, mot_de_passe) VALUES (%s, %s)', (nom_utilisateur, mot_de_passe))
+        conn_db.commit()
+    except Exception as e:
+        print(e)
+
+
+def authentification_user(username, password):
     """
     Cette fonction va nous permettre de vérifier les utilisateurs et leur mot de passe.
     """
-    is_auth = False
-    auth = (f"{username}: {password}")
-    if auth == users[password]:
-        is_auth = True
-    return is_auth
+    nom_utilisateur_saisi = username
+    mot_de_passe_saisi = sha256(password.encode()).hexdigest()
+
+    cursor.execute('SELECT * FROM utilisateurs WHERE nom_utilisateur=%s AND mot_de_passe=%s', (nom_utilisateur_saisi, mot_de_passe_saisi))
+    utilisateur = cursor.fetchone()
+
+    if utilisateur:
+        return True
+    else:
+        return False
 
 def authentification_admin():
     nom_utilisateur_saisi = input('Nom d\'utilisateur : ')
@@ -175,8 +186,6 @@ cursor = conn_db.cursor()
 
 clients = {} # La liste des clients connectés.
 blacklist = set() # La liste des utilisateurs bannis.
-users = load_users_from_db()
-print(users)
 
 #Lancement de la fonction console, donc lancement du terminal.
 console_thread = threading.Thread(target=console)
@@ -188,7 +197,6 @@ while True:
         conn, address = server_socket.accept()
         username = conn.recv(1024).decode()
         password = conn.recv(1024).decode()
-
         """
         On vérifie si le nouvel utilisateur est banni ou non.
         """
