@@ -101,7 +101,7 @@ def authentification_admin():
     nom_utilisateur_saisi = input('Nom d\'utilisateur : ')
     mot_de_passe_saisi = sha256(input('Mot de passe : ').encode()).hexdigest()
 
-    cursor.execute('SELECT * FROM utilisateurs WHERE nom_utilisateur=%s AND mot_de_passe=%s', (nom_utilisateur_saisi, mot_de_passe_saisi))
+    cursor.execute('SELECT * FROM admin WHERE nom_utilisateur=%s AND mot_de_passe=%s', (nom_utilisateur_saisi, mot_de_passe_saisi))
     utilisateur = cursor.fetchone()
 
     if utilisateur:
