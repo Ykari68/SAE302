@@ -44,6 +44,8 @@ def console():
                     kick(username, conn, clients)
                 else:
                     print(f"Le username {username} n'est pas connecté.")
+            elif commande == "historique":
+                afficher_historique()
         else:
             print("Utilisateur ou mot de passe incorrect.")
 
@@ -148,6 +150,7 @@ def broadcast(sender, message, clients):
                 """
                 Et on envoie.
                 """
+                enregistrer_message(sender, message)
             except:
                 deconnexion(client_username, client_conn, clients)
 
@@ -159,6 +162,20 @@ def deconnexion(username, conn, clients):
         del clients[username]
         conn.close()
         broadcast("Serveur", f"{username} a quitté la discussion.", clients)
+
+def enregistrer_message(sender, message):
+    try:
+        cursor.execute('INSERT INTO historique (sender, message) VALUES (%s, %s)', (sender, message))
+        conn_db.commit()
+    except Exception as e:
+        print(f"Erreur lors de l'enregistrement du message dans la base de données: {e}")
+
+def afficher_historique():
+    cursor.execute('SELECT * FROM historique ORDER BY timestamp')
+    historique = cursor.fetchall()
+
+    for ligne in historique:
+        print(f"{ligne[3]} - {ligne[1]}: {ligne[2]}")
 
 #Ce petit bout de code permet d'écouter les arrivés sur le port 6255.
 server_socket = socket.socket()
