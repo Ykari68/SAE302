@@ -31,6 +31,11 @@ def console():
                 username = commande.split()[1]
                 password = commande.split()[2]
                 register(username, password, conn_db)
+            
+            elif commande.startswith("regadmin"):
+                username = commande.split()[1]
+                password = commande.split()[2]
+                regadmin(username, password, conn_db)
                 
             elif commande.startswith("ban"):
                 username = commande.split()[1]
@@ -79,6 +84,16 @@ def register(username, password, conn_db):
         nom_utilisateur = username
         mot_de_passe = sha256(password.encode()).hexdigest()  # Hashage du mot de passe
         cursor.execute('INSERT INTO utilisateurs (nom_utilisateur, mot_de_passe) VALUES (%s, %s)', (nom_utilisateur, mot_de_passe))
+        conn_db.commit()
+    except Exception as e:
+        print(e)
+
+def regadmin(username, password, conn_db):
+    #Ajout d'un utilisateur
+    try:
+        nom_utilisateur = username
+        mot_de_passe = sha256(password.encode()).hexdigest()  # Hashage du mot de passe
+        cursor.execute('INSERT INTO admin (nom_utilisateur, mot_de_passe) VALUES (%s, %s)', (nom_utilisateur, mot_de_passe))
         conn_db.commit()
     except Exception as e:
         print(e)
@@ -241,5 +256,3 @@ while True:
         break
     
 console_thread.join()
-
-    
