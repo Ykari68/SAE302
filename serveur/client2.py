@@ -10,12 +10,31 @@ class Main(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.setWindowTitle("Compte")
+        self.setGeometry(800, 400, 200, 100)
+
+        layout = QVBoxLayout()
+
+        self.username = QLineEdit()
+        self.username.setPlaceholderText("Entrez votre nom d'utilisateur")
+        layout.addWidget(self.username)
+
+        self.password = QLineEdit()
+        self.password.setPlaceholderText("Entrez votre mot de passe")
+        layout.addWidget(self.password)
+
+        ok = QPushButton("Ok")
+        ok.clicked.connect(self.send(self.password))
+        layout.addWidget(ok)
+
+        self.setLayout(layout)
+        
         self.ui()
 
-        self.socket_thread = SocketThread(username, password)
-        
-        self.socket_thread.message_recu.connect(self.maj_chat)
-        self.socket_thread.start()
+    def send(username, password):
+        socket_thread = SocketThread(username, password)
+        socket_thread.message_recu.connect(self.maj_chat)
+        socket_thread.start()
 
     def ui(self):
 
@@ -54,7 +73,7 @@ class Main(QWidget):
     def maj_chat(self, message):
         self.message_recu = message
 
-class SocketThread(QThread):
+class SocketThread(QThread, QWidget):
     message_recu = pyqtSignal(str)
 
     def __init__(self, username, password):
@@ -65,19 +84,6 @@ class SocketThread(QThread):
 
         self.client_socket = socket.socket()
         self.client_socket.connect((self.server_address, self.server_port))
-
-        self.get_userinfo(username, password)
-
-        self.account()
-
-    def get_userinfo(self, username, password):
-        self.username = username
-        self.password = password
-
-    def account(self):
-        self.fenêtre = Account()
-        self.fenêtre.user_info_signal.connect(self.get_userinfo)
-        self.fenêtre.show()
 
 
     def ecoute(self):
@@ -100,40 +106,11 @@ class SocketThread(QThread):
     def envoi(self, message):
         self.client_socket.send(message.encode('utf-8'))
 
-class Account(QDialog):
-    user_info_signal = pyqtSignal(str, str)
-
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("Compte")
-        self.setGeometry(800, 400, 200, 100)
-
-        layout = QVBoxLayout()
-
-        self.username = QLineEdit()
-        self.username.setPlaceholderText("Entrez votre nom d'utilisateur")
-        layout.addWidget(self.username)
-
-        self.password = QLineEdit()
-        self.password.setPlaceholderText("Entrez votre mot de passe")
-        layout.addWidget(self.password)
-
-        ok = QPushButton("Ok")
-        ok.clicked.connect(self.send)
-        layout.addWidget(ok)
-
-        self.setLayout(layout)
-
-    def send(self):
-        username = str(self.username.text())
-        password = str(self.password.text())
-        self.user_info_signal.emit(username, password)
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     fenetre = Main()
     fenetre.show()
     sys.exit(app.exec())
+
+    
