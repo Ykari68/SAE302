@@ -45,7 +45,7 @@ class Main(QWidget):
         self.ui()
 
         self.socket_thread = SocketThread(username, password)
-        self.socket_thread.message_recu.connect(Main.maj_chat)
+        self.socket_thread.message_recu.connect(self.maj_chat)
         self.socket_thread.start()
 
     def ui(self):
@@ -55,27 +55,26 @@ class Main(QWidget):
         self.setWindowTitle("Chat App")
         self.setGeometry(800, 400, 500, 400)
 
-        self.message_recu = QLineEdit()
-        self.message_recu.setPlaceholderText("")
+        self.message_recu = QLabel()
         layout.addWidget(self.message_recu)
 
         self.vous = QLabel("You:")
         layout.addWidget(self.vous)
 
-        self.message_recu = QLineEdit()
-        self.message_recu.setPlaceholderText("Type a message")
-        layout.addWidget(self.message_recu)
+        self.message_envoi = QLineEdit()
+        self.message_envoi.setPlaceholderText("Type a message")
+        layout.addWidget(self.message_envoi)
 
-        send_button = QPushButton("Send")
+        send_button = QPushButton("Envoyer")
         send_button.clicked.connect(self.envoi)
         layout.addWidget(send_button)
 
         self.setLayout(layout)
 
     def envoi(self):
-        message = self.message_recu.text()
+        message = self.message_envoi.text()
         self.socket_thread.envoi(message)
-        self.message_recu.clear()
+        self.message_envoi.clear()
 
     @pyqtSlot(str)
     def maj_chat(self, message):
@@ -98,7 +97,7 @@ class SocketThread(QThread):
         time.sleep(3)
         self.client_socket.send(password.encode())
 
-    def ecoute(self):
+    def run(self):
         while True:
             try:
                 message = self.client_socket.recv(1024).decode()
