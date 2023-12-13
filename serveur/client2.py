@@ -5,6 +5,7 @@ import time
 from PyQt6 import *
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QLabel, QDialog, QComboBox
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
+from PyQt6.QtGui import QPixmap, QIcon, QColor, QPalette
 
 class Login(QWidget):
     def __init__(self):
@@ -12,6 +13,10 @@ class Login(QWidget):
 
         self.setWindowTitle("Login")
         self.setGeometry(800, 400, 200, 100)
+
+        pixmap = QPixmap("serveur\logo.png")
+        icon = QIcon(pixmap)
+        self.setWindowIcon(icon)
 
         layout = QVBoxLayout()
 
@@ -34,6 +39,21 @@ class Login(QWidget):
         password = self.password_saisi.text()
 
         self.fenêtre = Main(username, password)
+        app.setStyleSheet("""
+        QWidget {
+            background-color: rgb(86, 101, 115);
+            color: "white";
+        }
+        QPushButton {
+            font-size: 16px;
+            background-color: rgb(213, 216, 220)
+            text-color: rgb(44, 62, 80);
+        }
+        QLineEdit {
+            background-color: "white";
+            color: "black";
+        }
+    """)
         self.fenêtre.show()
 
         self.close()
@@ -54,6 +74,10 @@ class Main(QWidget):
 
         self.setWindowTitle("Chat App")
         self.setGeometry(800, 400, 500, 400)
+
+        pixmap = QPixmap("serveur\logo.png")
+        icon = QIcon(pixmap)
+        self.setWindowIcon(icon)
 
         self.message_recu = QLabel()
         layout.addWidget(self.message_recu)
@@ -114,6 +138,21 @@ class SocketThread(QThread):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Login()
+    app.setStyleSheet("""
+    QWidget {
+        background-color: rgb(86, 101, 115);
+        color: "white";
+    }
+    QPushButton {
+        font-size: 16px;
+        background-color: rgb(213, 216, 220)
+        text-color: rgb(44, 62, 80);
+    }
+    QLineEdit {
+        background-color: "white";
+        color: "black";
+    }
+""")
     window.show()
     sys.exit(app.exec())
 
