@@ -3,7 +3,7 @@ import threading
 import sys
 import time
 from PyQt6 import *
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QLabel, QDialog, QHBoxLayout, QGridLayout,
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QLabel, QDialog, QHBoxLayout, QGridLayout
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QFile, QTextStream
 from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication
 
@@ -23,19 +23,23 @@ class Login(QWidget):
 
         self.username_saisi = QLineEdit()
         self.username_saisi.setPlaceholderText("Enter your username")
-        layout.addWidget(self.username_saisi)
+        layout.addWidget(self.username_saisi, 0, 0, 1, 1)
 
         self.password_saisi = QLineEdit()
         self.password_saisi.setPlaceholderText("Enter your password")
         self.password_saisi.setEchoMode(QLineEdit.EchoMode.Password)
-        layout.addWidget(self.password_saisi)
+        layout.addWidget(self.password_saisi, 1, 0, 1, 1)
 
         ok = QPushButton("Ok")
         ok.clicked.connect(self.start_chat)
-        layout.addWidget(ok)
+        layout.addWidget(ok, 3, 0)
 
-        '''image = QLabel(self)
-        image.setPixmap(pixmap)'''
+        image = QLabel(self)
+        image.setPixmap(pixmap)
+        image.setObjectName("image")
+        image.setScaledContents(True)
+        layout.addWidget(image, 1, 1, 1, 1)
+
 
         self.setLayout(layout)
 
