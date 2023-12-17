@@ -3,22 +3,23 @@ import threading
 import sys
 import time
 from PyQt6 import *
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QLabel, QDialog, QComboBox
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
-from PyQt6.QtGui import QPixmap, QIcon, QColor, QPalette
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QLabel, QDialog, QHBoxLayout, QGridLayout,
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QFile, QTextStream
+from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication
 
 class Login(QWidget):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Login")
-        self.setGeometry(800, 400, 200, 100)
+        
 
         pixmap = QPixmap("serveur\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
-        layout = QVBoxLayout()
+        layout = QGridLayout()
+
 
         self.username_saisi = QLineEdit()
         self.username_saisi.setPlaceholderText("Enter your username")
@@ -26,34 +27,36 @@ class Login(QWidget):
 
         self.password_saisi = QLineEdit()
         self.password_saisi.setPlaceholderText("Enter your password")
+        self.password_saisi.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_saisi)
 
         ok = QPushButton("Ok")
         ok.clicked.connect(self.start_chat)
         layout.addWidget(ok)
 
+        '''image = QLabel(self)
+        image.setPixmap(pixmap)'''
+
         self.setLayout(layout)
+
+        screen_geometry = QGuiApplication.primaryScreen().availableGeometry()
+
+        window_width = 500
+        window_height = 400
+        window_x = (screen_geometry.width() - window_width) // 2
+        window_y = (screen_geometry.height() - window_height) // 2
+
+        self.setGeometry(window_x, window_y, window_width, window_height)
 
     def start_chat(self):
         username = self.username_saisi.text()
         password = self.password_saisi.text()
 
         self.fenêtre = Main(username, password)
-        app.setStyleSheet("""
-        QWidget {
-            background-color: rgb(86, 101, 115);
-            color: "white";
-        }
-        QPushButton {
-            font-size: 16px;
-            background-color: rgb(213, 216, 220)
-            text-color: rgb(44, 62, 80);
-        }
-        QLineEdit {
-            background-color: "white";
-            color: "black";
-        }
-    """)
+
+        with open("serveur\style.qss", "r") as f:
+            self.fenêtre.setStyleSheet(f.read())
+
         self.fenêtre.show()
 
         self.close()
@@ -73,7 +76,6 @@ class Main(QWidget):
         layout = QVBoxLayout()
 
         self.setWindowTitle("Chat App")
-        self.setGeometry(800, 400, 500, 400)
 
         pixmap = QPixmap("serveur\logo.png")
         icon = QIcon(pixmap)
@@ -94,6 +96,10 @@ class Main(QWidget):
         layout.addWidget(send_button)
 
         self.setLayout(layout)
+
+        screen_size = QGuiApplication.primaryScreen().availableGeometry()
+        
+        self.resize(screen_size.width(), screen_size.height())
 
     def envoi(self):
         message = self.message_envoi.text()
@@ -138,21 +144,10 @@ class SocketThread(QThread):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Login()
-    app.setStyleSheet("""
-    QWidget {
-        background-color: rgb(86, 101, 115);
-        color: "white";
-    }
-    QPushButton {
-        font-size: 16px;
-        background-color: rgb(213, 216, 220)
-        text-color: rgb(44, 62, 80);
-    }
-    QLineEdit {
-        background-color: "white";
-        color: "black";
-    }
-""")
+
+    with open("serveur\style.qss", "r") as f:
+        app.setStyleSheet(f.read())
+
     window.show()
     sys.exit(app.exec())
 
