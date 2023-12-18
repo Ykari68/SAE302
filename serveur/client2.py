@@ -3,9 +3,9 @@ import threading
 import sys
 import time
 from PyQt6 import *
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QLabel, QDialog, QHBoxLayout, QGridLayout
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QFile, QTextStream
-from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QGridLayout, QTextEdit
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
+from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication, QTextCursor
 
 class Login(QWidget):
     def __init__(self):
@@ -13,33 +13,32 @@ class Login(QWidget):
 
         self.setWindowTitle("Login")
         
-
         pixmap = QPixmap("serveur\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
         layout = QGridLayout()
 
-
         self.username_saisi = QLineEdit()
         self.username_saisi.setPlaceholderText("Enter your username")
+        self.username_saisi.setObjectName("login")
         layout.addWidget(self.username_saisi, 0, 0, 1, 1)
 
         self.password_saisi = QLineEdit()
         self.password_saisi.setPlaceholderText("Enter your password")
         self.password_saisi.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_saisi.setObjectName("login")
         layout.addWidget(self.password_saisi, 1, 0, 1, 1)
 
         ok = QPushButton("Ok")
         ok.clicked.connect(self.start_chat)
-        layout.addWidget(ok, 3, 0)
+        layout.addWidget(ok, 2, 0)
 
         image = QLabel(self)
         image.setPixmap(pixmap)
         image.setObjectName("image")
         image.setScaledContents(True)
-        layout.addWidget(image, 1, 1, 1, 1)
-
+        layout.addWidget(image, 1, 2, 1, 1)
 
         self.setLayout(layout)
 
@@ -77,19 +76,17 @@ class Main(QWidget):
 
     def ui(self):
 
-        layout = QVBoxLayout()
+        layout = QGridLayout()
 
-        self.setWindowTitle("Chat App")
+        self.setWindowTitle("Whiskr")
 
         pixmap = QPixmap("serveur\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
-        self.message_recu = QLabel()
-        layout.addWidget(self.message_recu)
-
-        self.vous = QLabel("You:")
-        layout.addWidget(self.vous)
+        self.chat_history = QTextEdit()
+        self.chat_history.setReadOnly(True)
+        layout.addWidget(self.chat_history)
 
         self.message_envoi = QLineEdit()
         self.message_envoi.setPlaceholderText("Type a message")
@@ -102,7 +99,7 @@ class Main(QWidget):
         self.setLayout(layout)
 
         screen_size = QGuiApplication.primaryScreen().availableGeometry()
-        
+
         self.resize(screen_size.width(), screen_size.height())
 
     def envoi(self):
@@ -112,7 +109,13 @@ class Main(QWidget):
 
     @pyqtSlot(str)
     def maj_chat(self, message):
-        self.message_recu.setText(message)
+        
+        current_text = self.chat_history.toPlainText()
+        self.chat_history.setPlainText(current_text + '\n' + message)
+
+        cursor = self.chat_history.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        self.chat_history.setTextCursor(cursor)
 
 
 class SocketThread(QThread):

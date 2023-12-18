@@ -7,6 +7,7 @@ QPushButton {
         background-color: rgb(213, 216, 220);
         color: rgb(44, 62, 80);
         border-radius: 10px;
+        width: 50px;
     }
                       
 QPushButton:hover {
@@ -15,10 +16,13 @@ QPushButton:hover {
         color: rgb(213, 216, 220);
     }
                                          
-QLineEdit {
+#login {
     border: 2px solid rgb(213, 216, 220);
     border-radius: 10px;
     padding: 0 8px;
+    min-width: 200px; 
+    max-width: 200px;
+    height: 30px;
     background: white;
     color: black;
     selection-background-color: rgb(44, 62, 80);

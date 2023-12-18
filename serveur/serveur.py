@@ -156,18 +156,14 @@ def broadcast(sender, message, clients):
         """
         On créer une boucle afin d'obtenir tous les clients connectés lors de l'envoie du message.
         """
-        if client_username != sender:
+        try:
+            client_conn.send(f"{sender}: {message}".encode())
             """
-            On vérifie que les utilisateurs ne sont pas l'envoyeur.
+            Et on envoie.
             """
-            try:
-                client_conn.send(f"{sender}: {message}".encode())
-                """
-                Et on envoie.
-                """
-                enregistrer_message(sender, message)
-            except:
-                deconnexion(client_username, client_conn, clients)
+            enregistrer_message(sender, message)
+        except:
+            deconnexion(client_username, client_conn, clients)
 
 def deconnexion(username, conn, clients):
     """
