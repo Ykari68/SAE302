@@ -85,8 +85,11 @@ def register(username, password, conn_db):
         mot_de_passe = sha256(password.encode()).hexdigest()  # Hashage du mot de passe
         cursor.execute('INSERT INTO utilisateurs (nom_utilisateur, mot_de_passe) VALUES (%s, %s)', (nom_utilisateur, mot_de_passe))
         conn_db.commit()
+        print("Compte ajouté !")
+        return True
     except Exception as e:
         print(e)
+        return False
 
 def regadmin(username, password, conn_db):
     #Ajout d'un utilisateur
@@ -224,6 +227,19 @@ while True:
     try:
         conn, address = server_socket.accept()
         username = conn.recv(1024).decode()
+        if username.startswith("FWwCXNb9u3l0E1Ej3OqsRBGlR9zkyHIv"):
+                parts = username.split()
+                if len(parts) >= 3:
+                    username = parts[1]
+                    password = parts[2]
+                    if register(username, password, conn_db) == True:
+                        conn.send("Création de compte réussie!".encode())
+                        conn.close()
+                        continue
+                    else:
+                        print("test")
+                        conn.send("Compte existant!".encode())
+                        continue
         password = conn.recv(1024).decode()
         """
         On vérifie si le nouvel utilisateur est banni ou non.
@@ -247,8 +263,8 @@ while True:
         else: 
             print(f"Le username {username} est blacklisté. Refuser la connexion.")
             conn.close()
-    except:
-        print("Fin.")
+    except Exception as e:
+        print(f"Fin. {e}")
         break
     
 console_thread.join()

@@ -34,3 +34,10 @@ QPushButton:hover {
     width: 100px;
     height: 100px;
 }
+
+#nouveau {
+    border: 2px solid rgb(213, 216, 220);
+    border-radius: 10px;
+    text-align: center;
+    font: 16px;
+    }
