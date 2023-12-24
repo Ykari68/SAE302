@@ -59,6 +59,7 @@ def com(conn, clients, username):
      La fonction com se lance en tant que thread dès qu'une communication avec un client se fait. Donc un client = un thread com. La fonction gère les clients.
     """
     if authentification_user(username, password) == True:
+            historique(conn)
             conn.send("Authentification réussie.".encode())
             while True:
                 """
@@ -159,14 +160,18 @@ def broadcast(sender, message, clients):
         """
         On créer une boucle afin d'obtenir tous les clients connectés lors de l'envoie du message.
         """
-        try:
-            client_conn.send(f"{sender}: {message}".encode())
+        if client_username != sender:
             """
-            Et on envoie.
+            Si le client n'est pas l'envoyeur, on envoie le message.
             """
-            enregistrer_message(sender, message)
-        except:
-            deconnexion(client_username, client_conn, clients)
+            try:
+                client_conn.send(f"{sender}: {message}".encode())
+                """
+                Et on envoie.
+                """
+                enregistrer_message(sender, message)
+            except:
+                deconnexion(client_username, client_conn, clients)
 
 def deconnexion(username, conn, clients):
     """
@@ -190,6 +195,14 @@ def afficher_historique():
 
     for ligne in historique:
         print(f"{ligne[3]} - {ligne[1]}: {ligne[2]}")
+
+def historique(conn):
+    cursor.execute('SELECT * FROM historique ORDER BY timestamp')
+    historique = cursor.fetchall()
+
+    for ligne in historique:
+        ligne_texte = f"{ligne[1]}: {ligne[2]}"
+        conn.send((ligne_texte + '\n').encode())
 
 #Ce petit bout de code permet d'écouter les arrivés sur le port 6255.
 server_socket = socket.socket()
