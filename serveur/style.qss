@@ -41,3 +41,11 @@ QPushButton:hover {
     text-align: center;
     font: 16px;
     }
+
+#pseudo {
+    border: 2px solid rgb(213, 216, 220);
+    border-radius: 10px;
+    text-align: center;
+    font: 16px;
+    }
+

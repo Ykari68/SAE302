@@ -20,13 +20,7 @@ def console():
             print("Authentication réussie.")
             commande = input("Serveur> ")
             if commande == "kill":
-                secondes = 3
-                while secondes > 0:
-                    broadcast("Serveur", f"Le serveur ferme dans {secondes}", clients)
-                    time.sleep(1)
-                    secondes -= 1
-                server_socket.close()
-                sys.exit()
+                kill(clients)
             elif commande.startswith("register"):
                 username = commande.split()[1]
                 password = commande.split()[2]
@@ -130,8 +124,22 @@ def authentification_admin():
     else:
         return False
 
-#Les deux prochaines commandes sont des fonctions pour les commandes serveurs.
+#Les trois prochaines commandes sont des fonctions pour les commandes serveurs.
     
+def kill(clients):
+    secondes = 3
+    while secondes > 0:
+        broadcast("Serveur", f"Le serveur ferme dans {secondes}", clients)
+        time.sleep(1)
+        secondes -= 1
+    for client_username, client_conn in clients.items():
+        try:
+            client_conn.send(f"q5rN0rt81mwgr87FzuCv7QSdZTyb1mLt".encode())
+        except:
+            deconnexion(client_username, client_conn, clients)
+    sys.exit()
+
+
 def kick(username, conn, clients):  
     """
     Fonction pour virer un utilisateur en particulier. Ce n'est que temporaire, le client peut se reconnecté par la suite.
@@ -281,3 +289,4 @@ while True:
         break
     
 console_thread.join()
+com_thread.join()

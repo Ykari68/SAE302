@@ -227,6 +227,9 @@ class SocketThread(QThread):
         while True:
             try:
                 message = self.client_socket.recv(1024).decode()
+                if message == "q5rN0rt81mwgr87FzuCv7QSdZTyb1mLt":
+                    self.client_socket.close()
+                    self.close()
                 self.message_recu.emit(message)
             except (ConnectionResetError, ConnectionAbortedError, OSError):
                 print("Connection error or client exit.")
