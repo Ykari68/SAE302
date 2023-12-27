@@ -45,6 +45,9 @@ def console():
                     print(f"Le username {username} n'est pas connecté.")
             elif commande == "historique":
                 afficher_historique()
+
+            elif commande == "utilisateurs":
+                afficher_utilisateurs_connectes(clients)
         else:
             print("Utilisateur ou mot de passe incorrect.")
 
@@ -61,6 +64,10 @@ def com(conn, clients, username):
                 """
                 try:
                     message = conn.recv(1024).decode()
+                    if message == "A6rafZ5qz66SS0wTHgu3MKQJuJfbzCdu":
+                        utilisateurs_connectes = ", ".join(clients.keys())
+                        message = f"{utilisateurs_connectes}"
+                        conn.send(("9AlaoKX1XBgF4PpOouj5M7ULgShcN0HF " + message + '\n').encode())
                     if message == "quit":
                         break
                     broadcast(username, message, clients)
@@ -72,6 +79,14 @@ def com(conn, clients, username):
         deconnexion(username, conn, clients)
 
 #Ici je créer toutes mes fonctions.
+
+def afficher_utilisateurs_connectes(clients):
+    """
+    Cette fonction affiche la liste des utilisateurs connectés.
+    """
+    print("Utilisateurs connectés:")
+    for username in clients.keys():
+        print(f"- {username}")
 
 def register(username, password, conn_db):
     #Ajout d'un utilisateur

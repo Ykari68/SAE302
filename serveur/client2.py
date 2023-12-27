@@ -3,9 +3,12 @@ import threading
 import sys
 import time
 from PyQt6 import *
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QGridLayout, QTextEdit
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QGridLayout, QTextEdit, QCheckBox, QVBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
 from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication, QTextCursor
+
+address = "127.0.0.1"
+port = 6255
 
 class Login(QWidget):
     def __init__(self):
@@ -128,8 +131,8 @@ class Compte(QWidget):
         password = self.password_saisi.text()
         code = (f"FWwCXNb9u3l0E1Ej3OqsRBGlR9zkyHIv {username} {password}")
 
-        self.server_address = "192.168.1.65"
-        self.server_port = 6255
+        self.server_address = address
+        self.server_port = port
 
         self.client_socket = socket.socket()
         self.client_socket.connect((self.server_address, self.server_port))
@@ -152,6 +155,64 @@ class Compte(QWidget):
         else:
             self.prompt.setText(f"{message}")
 
+class Canal(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.ui()
+
+    def ui(self):
+        layout = QGridLayout()
+
+        self.setWindowTitle("Nouveau Canal")
+
+        pixmap = QPixmap("serveur\logo.png")
+        icon = QIcon(pixmap)
+        self.setWindowIcon(icon)
+
+        self.users = []
+
+        self.canal = QTextEdit("Nouveau Canal")
+        self.canal.setReadOnly(True)
+        layout.addWidget(self.canal, 0, 1, 1, 3)
+
+        self.users_container = QWidget()  # Container widget for checkboxes
+        user_layout = QVBoxLayout(self.users_container)
+        layout.addWidget(self.users_container, 1, 0, 1, 3)
+
+        ok = QPushButton("Ok")
+        layout.addWidget(ok, 2, 0)
+
+        self.setLayout(layout)
+
+        screen_geometry = QApplication.primaryScreen().availableGeometry()
+
+        window_width = 500
+        window_height = 400
+        window_x = (screen_geometry.width() - window_width) // 2
+        window_y = (screen_geometry.height() - window_height) // 2
+
+        self.setGeometry(window_x, window_y, window_width, window_height)
+
+    @pyqtSlot(str)
+    def afficher_users(self, message):
+        # Assuming the message is a space-separated string of usernames
+        self.users = message.split()
+
+        # Clear existing checkboxes
+        for i in reversed(range(self.users_container.layout().count())):
+            item = self.users_container.layout().itemAt(i)
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+
+        # Add checkboxes for each user
+        for i, user in enumerate(self.users):
+            checkbox = QCheckBox(user)
+            self.users_container.layout().addWidget(checkbox)
+
+        # Update the layout
+        self.adjustSize()
 
 class Main(QWidget):
     def __init__(self, username, password):
@@ -173,23 +234,44 @@ class Main(QWidget):
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
+        self.general = QTextEdit("General")
+        self.general.setReadOnly(True)
+        layout.addWidget(self.general, 0, 1, 1, 3)
+
+        canal = QPushButton("Nouveau Canal")
+        canal.clicked.connect(self.canal)
+        layout.addWidget(canal, 1, 1, 1, 1)
+
         self.chat_history = QTextEdit()
         self.chat_history.setReadOnly(True)
-        layout.addWidget(self.chat_history)
+        layout.addWidget(self.chat_history, 0, 2, 1, 2)
 
         self.message_envoi = QLineEdit()
-        self.message_envoi.setPlaceholderText("Type a message")
-        layout.addWidget(self.message_envoi)
+        self.message_envoi.setPlaceholderText("Ecrivez un message à envoyer")
+        layout.addWidget(self.message_envoi, 1, 2, 1, 2)
 
         send_button = QPushButton("Envoyer")
         send_button.clicked.connect(self.envoi)
-        layout.addWidget(send_button)
+        layout.addWidget(send_button, 2, 2, 1, 2)
 
         self.setLayout(layout)
 
         screen_size = QGuiApplication.primaryScreen().availableGeometry()
 
         self.resize(screen_size.width(), screen_size.height())
+
+    def canal(self):
+        self.fenêtre = Canal()
+
+        self.socket_thread.demande_canal.connect(self.fenêtre.afficher_users)
+
+        with open("serveur\style.qss", "r") as f:
+            self.fenêtre.setStyleSheet(f.read())
+
+        # Emit the demande signal from the SocketThread instance
+        self.socket_thread.emit_demande("A6rafZ5qz66SS0wTHgu3MKQJuJfbzCdu")
+
+        self.fenêtre.show()
 
     def envoi(self):
         message = self.message_envoi.text()
@@ -206,15 +288,16 @@ class Main(QWidget):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.chat_history.setTextCursor(cursor)
 
-
 class SocketThread(QThread):
     message_recu = pyqtSignal(str)
+    demande = pyqtSignal(str)
+    demande_canal = pyqtSignal(str)
 
     def __init__(self, username, password):
         super().__init__()
 
-        self.server_address = "192.168.1.65"
-        self.server_port = 6255
+        self.server_address = address
+        self.server_port = port
 
         self.client_socket = socket.socket()
         self.client_socket.connect((self.server_address, self.server_port))
@@ -223,6 +306,9 @@ class SocketThread(QThread):
         time.sleep(3)
         self.client_socket.send(password.encode())
 
+        # Connect the demande signal to the demande slot
+        self.demande.connect(self.demande_slot)
+
     def run(self):
         while True:
             try:
@@ -230,6 +316,8 @@ class SocketThread(QThread):
                 if message == "q5rN0rt81mwgr87FzuCv7QSdZTyb1mLt":
                     self.client_socket.close()
                     self.close()
+                elif message.startswith("9AlaoKX1XBgF4PpOouj5M7ULgShcN0HF"):
+                    self.demande.emit(message[32:])
                 self.message_recu.emit(message)
             except (ConnectionResetError, ConnectionAbortedError, OSError):
                 print("Connection error or client exit.")
@@ -239,6 +327,14 @@ class SocketThread(QThread):
     def envoi(self, message):
         self.client_socket.send(message.encode('utf-8'))
 
+    @pyqtSlot(str)
+    def demande_slot(self, message):
+        self.demande_canal.emit(message)
+        self.client_socket.send(message.encode())
+
+    def emit_demande(self, message):
+        # Emit the demande signal from within this method
+        self.demande.emit(message)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -249,5 +345,3 @@ if __name__ == "__main__":
 
     window.show()
     sys.exit(app.exec())
-
-    
