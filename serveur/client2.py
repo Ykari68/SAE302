@@ -174,14 +174,17 @@ class Canal(QWidget):
 
         self.canal = QTextEdit("Nouveau Canal")
         self.canal.setReadOnly(True)
-        layout.addWidget(self.canal, 0, 1, 1, 3)
+        layout.addWidget(self.canal, 0, 0, 1, 2)
+
+        users_label = QLabel("Users:")
+        layout.addWidget(users_label, 1, 0, 1, 1)
 
         self.users_container = QWidget()  # Container widget for checkboxes
-        user_layout = QVBoxLayout(self.users_container)
-        layout.addWidget(self.users_container, 1, 0, 1, 3)
+        user_layout = QGridLayout(self.users_container)
+        layout.addWidget(self.users_container, 1, 1, 1, 1)
 
         ok = QPushButton("Ok")
-        layout.addWidget(ok, 2, 0)
+        layout.addWidget(ok, 2, 0, 1, 2)
 
         self.setLayout(layout)
 
@@ -207,9 +210,9 @@ class Canal(QWidget):
                 widget.setParent(None)
 
         # Add checkboxes for each user
-        for i, user in enumerate(self.users):
+        for row, user in enumerate(self.users):
             checkbox = QCheckBox(user)
-            self.users_container.layout().addWidget(checkbox)
+            self.users_container.layout().addWidget(checkbox, row, 0)
 
         # Update the layout
         self.adjustSize()
