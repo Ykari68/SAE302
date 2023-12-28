@@ -16,7 +16,7 @@ class Login(QWidget):
 
         self.setWindowTitle("Login")
         
-        pixmap = QPixmap("serveur\logo.png")
+        pixmap = QPixmap("client\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -64,7 +64,7 @@ class Login(QWidget):
 
         self.fenêtre = Main(username, password)
 
-        with open("serveur\style.qss", "r") as f:
+        with open("client\style.qss", "r") as f:
             self.fenêtre.setStyleSheet(f.read())
 
         self.fenêtre.show()
@@ -74,7 +74,7 @@ class Login(QWidget):
     def new_account(self):
         self.fenêtre = Compte()
 
-        with open("serveur\style.qss", "r") as f:
+        with open("client\style.qss", "r") as f:
             self.fenêtre.setStyleSheet(f.read())
 
         self.fenêtre.show()
@@ -87,7 +87,7 @@ class Compte(QWidget):
 
         self.setWindowTitle("Whiskr")
 
-        pixmap = QPixmap("serveur\logo.png")
+        pixmap = QPixmap("client\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -146,7 +146,7 @@ class Compte(QWidget):
             time.sleep(3)
             self.fenêtre = Login()
 
-            with open("serveur\style.qss", "r") as f:
+            with open("client\style.qss", "r") as f:
                 self.fenêtre.setStyleSheet(f.read())
 
             self.fenêtre.show()
@@ -156,6 +156,7 @@ class Compte(QWidget):
             self.prompt.setText(f"{message}")
 
 class Canal(QWidget):
+    selected_users_signal = pyqtSignal(str)
     def __init__(self):
         super().__init__()
 
@@ -166,7 +167,7 @@ class Canal(QWidget):
 
         self.setWindowTitle("Nouveau Canal")
 
-        pixmap = QPixmap("serveur\logo.png")
+        pixmap = QPixmap("client\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -184,6 +185,7 @@ class Canal(QWidget):
         layout.addWidget(self.users_container, 1, 1, 1, 1)
 
         ok = QPushButton("Ok")
+        ok.clicked.connect(self.get_selected_users)
         layout.addWidget(ok, 2, 0, 1, 2)
 
         self.setLayout(layout)
@@ -199,23 +201,23 @@ class Canal(QWidget):
 
     @pyqtSlot(str)
     def afficher_users(self, message):
-        # Assuming the message is a space-separated string of usernames
-        self.users = message.split()
+        self.users = message.split(',')
 
-        # Clear existing checkboxes
         for i in reversed(range(self.users_container.layout().count())):
             item = self.users_container.layout().itemAt(i)
             widget = item.widget()
             if widget:
                 widget.setParent(None)
 
-        # Add checkboxes for each user
         for row, user in enumerate(self.users):
             checkbox = QCheckBox(user)
             self.users_container.layout().addWidget(checkbox, row, 0)
 
-        # Update the layout
         self.adjustSize()
+    
+    def get_selected_users(self):
+        selected_users = list(checkbox.text() for checkbox in self.users_container.findChildren(QCheckBox) if checkbox.isChecked())
+        self.selected_users_signal.emit(','.join(selected_users))
 
 class Main(QWidget):
     def __init__(self, username, password):
@@ -227,13 +229,14 @@ class Main(QWidget):
         self.socket_thread.message_recu.connect(self.maj_chat)
         self.socket_thread.start()
 
+
     def ui(self):
 
         layout = QGridLayout()
 
         self.setWindowTitle("Whiskr")
 
-        pixmap = QPixmap("serveur\logo.png")
+        pixmap = QPixmap("client\logo.png")
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -267,8 +270,9 @@ class Main(QWidget):
         self.fenêtre = Canal()
 
         self.socket_thread.demande_canal.connect(self.fenêtre.afficher_users)
+        self.fenêtre.selected_users_signal.connect(self.socket_thread.send_canal)
 
-        with open("serveur\style.qss", "r") as f:
+        with open("client\style.qss", "r") as f:
             self.fenêtre.setStyleSheet(f.read())
 
         # Emit the demande signal from the SocketThread instance
@@ -309,7 +313,6 @@ class SocketThread(QThread):
         time.sleep(3)
         self.client_socket.send(password.encode())
 
-        # Connect the demande signal to the demande slot
         self.demande.connect(self.demande_slot)
 
     def run(self):
@@ -339,11 +342,16 @@ class SocketThread(QThread):
         # Emit the demande signal from within this method
         self.demande.emit(message)
 
+    @pyqtSlot(str)
+    def send_canal(self, selected_users):
+        self.client_socket.send(f"8pVYSY6sOEV2LGYgasbtZqk3mM6PO8Hw{selected_users}".encode())
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Login()
 
-    with open("serveur\style.qss", "r") as f:
+    with open("client\style.qss", "r") as f:
         app.setStyleSheet(f.read())
 
     window.show()

@@ -55,6 +55,36 @@ def com(conn, clients, username):
     """
      La fonction com se lance en tant que thread dès qu'une communication avec un client se fait. Donc un client = un thread com. La fonction gère les clients.
     """
+    def create_custom_channel(usernames, clients):
+        """
+        Crée un canal personnalisé pour les utilisateurs spécifiés.
+        """
+        channel_users = set(usernames.split(", "))
+        channel_users.add(username)  # Ajoute l'utilisateur actuel au canal
+        channel_name = "-".join(sorted(channel_users))
+
+        # Envoie un message à chaque utilisateur pour les informer du nouveau canal
+        for user in channel_users:
+            user_conn = clients.get(user)
+            if user_conn:
+                user_conn.send(f"Vous avez rejoint le canal {channel_name}.".encode())
+
+        while True:
+            try:
+                message = conn.recv(1024).decode()
+                if message == "quit":
+                    break
+                else:
+                    # Broadcast seulement aux membres du canal
+                    broadcast(username, message, {user: clients[user] for user in channel_users if user in clients})
+            except (ConnectionResetError, ConnectionAbortedError):
+                break
+        # Informe les utilisateurs du canal qu'il a été fermé
+        for user in channel_users:
+            user_conn = clients.get(user)
+            if user_conn:
+                user_conn.send(f"Le canal {channel_name} a été fermé.".encode())
+
     if authentification_user(username, password) == True:
             historique(conn)
             conn.send("Authentification réussie.".encode())
@@ -67,7 +97,14 @@ def com(conn, clients, username):
                     if message == "A6rafZ5qz66SS0wTHgu3MKQJuJfbzCdu":
                         utilisateurs_connectes = ", ".join(clients.keys())
                         message = f"{utilisateurs_connectes}"
-                        conn.send(("9AlaoKX1XBgF4PpOouj5M7ULgShcN0HF " + message + '\n').encode())
+                        conn.send(("9AlaoKX1XBgF4PpOouj5M7ULgShcN0HF " + message).encode())
+                    elif message.startswith("8pVYSY6sOEV2LGYgasbtZqk3mM6PO8Hw"):
+                        # Process custom channel creation message
+                        parts = message.split(" ", 1)
+                        if len(parts) == 2:
+                            create_custom_channel(parts[1], clients)
+                        else:
+                            conn.send("Invalid custom channel creation message.".encode())
                     if message == "quit":
                         break
                     broadcast(username, message, clients)
