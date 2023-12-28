@@ -1,3 +1,2 @@
 mysql-connector-python
 bcrypt
-hashlib

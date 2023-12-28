@@ -6,10 +6,20 @@ from PyQt6 import *
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QGridLayout, QTextEdit, QCheckBox, QVBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
 from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication, QTextCursor
+import os
+
+# Récupérer le chemin absolu du répertoire de l'exécutable
+executable_directory = os.path.dirname(sys.executable)
+
+# Construire le chemin relatif des fichiers par rapport à l'exécutable
+config_file_path = os.path.join(executable_directory, 'config.txt')
+logo_file_path = os.path.join(executable_directory, 'logo.png')
+style_file_path = os.path.join(executable_directory, 'style.qss')
 
 # Ouvrir le fichier en mode lecture ('r')
-with open('client\config.txt', 'r') as file:
+with open(config_file_path, 'r') as file:
     lines = file.readlines()
+
 
 # Initialiser les variables
 address = "127.0.0.1"
@@ -29,7 +39,7 @@ class Login(QWidget):
 
         self.setWindowTitle("Login")
         
-        pixmap = QPixmap("client\logo.png")
+        pixmap = QPixmap(logo_file_path)
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -77,7 +87,7 @@ class Login(QWidget):
 
         self.fenêtre = Main(username, password)
 
-        with open("client\style.qss", "r") as f:
+        with open(style_file_path, "r") as f:
             self.fenêtre.setStyleSheet(f.read())
 
         self.fenêtre.show()
@@ -87,7 +97,7 @@ class Login(QWidget):
     def new_account(self):
         self.fenêtre = Compte()
 
-        with open("client\style.qss", "r") as f:
+        with open(style_file_path, "r") as f:
             self.fenêtre.setStyleSheet(f.read())
 
         self.fenêtre.show()
@@ -100,7 +110,7 @@ class Compte(QWidget):
 
         self.setWindowTitle("Whiskr")
 
-        pixmap = QPixmap("client\logo.png")
+        pixmap = QPixmap(logo_file_path)
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -159,7 +169,7 @@ class Compte(QWidget):
             time.sleep(3)
             self.fenêtre = Login()
 
-            with open("client\style.qss", "r") as f:
+            with open(style_file_path, "r") as f:
                 self.fenêtre.setStyleSheet(f.read())
 
             self.fenêtre.show()
@@ -180,7 +190,7 @@ class Canal(QWidget):
 
         self.setWindowTitle("Nouveau Canal")
 
-        pixmap = QPixmap("client\logo.png")
+        pixmap = QPixmap(logo_file_path)
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -249,7 +259,7 @@ class Main(QWidget):
 
         self.setWindowTitle("Whiskr")
 
-        pixmap = QPixmap("client\logo.png")
+        pixmap = QPixmap(logo_file_path)
         icon = QIcon(pixmap)
         self.setWindowIcon(icon)
 
@@ -285,7 +295,7 @@ class Main(QWidget):
         self.socket_thread.demande_canal.connect(self.fenêtre.afficher_users)
         self.fenêtre.selected_users_signal.connect(self.socket_thread.send_canal)
 
-        with open("client\style.qss", "r") as f:
+        with open(style_file_path, "r") as f:
             self.fenêtre.setStyleSheet(f.read())
 
         # Emit the demande signal from the SocketThread instance
@@ -364,7 +374,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Login()
 
-    with open("client\style.qss", "r") as f:
+    with open(style_file_path, "r") as f:
         app.setStyleSheet(f.read())
 
     window.show()
