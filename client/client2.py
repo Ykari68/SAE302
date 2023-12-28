@@ -12,9 +12,9 @@ import os
 executable_directory = os.path.dirname(sys.executable)
 
 # Construire le chemin relatif des fichiers par rapport à l'exécutable
-config_file_path = os.path.join(executable_directory, 'config.txt')
-logo_file_path = os.path.join(executable_directory, 'logo.png')
-style_file_path = os.path.join(executable_directory, 'style.qss')
+config_file_path = 'SAE302/client/dist/config.txt'
+logo_file_path = 'SAE302/client/dist/logo.png'
+style_file_path = 'SAE302/client/dist/style.qss'
 
 # Ouvrir le fichier en mode lecture ('r')
 with open(config_file_path, 'r') as file:
