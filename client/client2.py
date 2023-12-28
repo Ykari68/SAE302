@@ -7,8 +7,21 @@ from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabe
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
 from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication, QTextCursor
 
+# Ouvrir le fichier en mode lecture ('r')
+with open('client\config.txt', 'r') as file:
+    lines = file.readlines()
+
+# Initialiser les variables
 address = "127.0.0.1"
 port = 6255
+
+# Parcourir chaque ligne pour extraire les valeurs
+for line in lines:
+    if "address" in line:
+        address = line.split('=')[1].strip().strip('"')
+    elif "port" in line:
+        port = int(line.split('=')[1])
+
 
 class Login(QWidget):
     def __init__(self):

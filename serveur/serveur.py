@@ -7,6 +7,16 @@ import sys
 from hashlib import sha256
 import time
 
+#!/usr/bin/env python3
+with open('serveur\config.txt', 'r') as file:
+    lines = file.readlines()
+
+port = None
+
+for line in lines:
+    if "port" in line:
+        port = int(line.split('=')[1])
+
 #Ici je créer mes deux fonctions qui vont servir de thread.
 def console():
     """
@@ -264,9 +274,9 @@ def historique(conn):
         ligne_texte = f"{ligne[1]}: {ligne[2]}"
         conn.send((ligne_texte + '\n').encode())
 
-#Ce petit bout de code permet d'écouter les arrivés sur le port 6255.
+#Ce petit bout de code permet d'écouter les arrivés sur le port donné (par défaut 6255).
 server_socket = socket.socket()
-server_socket.bind(('0.0.0.0', 6255))
+server_socket.bind(('0.0.0.0', port))
 server_socket.listen(1)
 print("En attente de connexion...")
 
