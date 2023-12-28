@@ -8,7 +8,7 @@ from hashlib import sha256
 import time
 
 #!/usr/bin/env python3
-with open('serveur\config.txt', 'r') as file:
+with open('SAE302/serveur/config.txt', 'r') as file:
     lines = file.readlines()
 
 port = None
