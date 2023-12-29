@@ -7,7 +7,11 @@ import sys
 from hashlib import sha256
 import time
 
+#Ceci est le script final du serveur whiskr. Il gère les connexions et les demandes des clients ainsi que dispose d'une console pour administrateur.
+
+#Affectation de l'interpreteur python3 pour lire le script sur une machine linux.
 #!/usr/bin/env python3
+#On ouvre et lis le fichier config.txt afin de récupérer le port d'écoute configuré par l'utilisateur. Par défaut il vaut 6255.
 with open('SAE302/serveur/config.txt', 'r') as file:
     lines = file.readlines()
 
@@ -29,33 +33,37 @@ def console():
         if authentification_admin() == True:
             print("Authentication réussie.")
             commande = input("Serveur> ")
+            #La commande kill compte 3 secondes avant de s'éteindre et éteindre tous les clients.
             if commande == "kill":
                 kill(clients)
+            #La commande register permet de manuellement créer un nouveau compte utilisateur.
             elif commande.startswith("register"):
                 username = commande.split()[1]
                 password = commande.split()[2]
                 register(username, password, conn_db)
-            
+            #La commande regadmin permet de manuellement créer un nouveau compte administrateur.
             elif commande.startswith("regadmin"):
                 username = commande.split()[1]
                 password = commande.split()[2]
                 regadmin(username, password, conn_db)
-                
+            #La commande ban permet de bannir un utilisateur. Il ne pourra plus s'y reconnecter.
             elif commande.startswith("ban"):
                 username = commande.split()[1]
                 if username in clients:
                     ban(username, conn, clients)
                 else:
                     print(f"Le username {username} n'est pas connecté.")
+            #La commande kick permet d'expulser un utilisateur. Il pourra s'y reconnecter.
             elif commande.startswith("kick"):
                 username = commande.split()[1]
                 if username in clients:
                     kick(username, conn, clients)
                 else:
                     print(f"Le username {username} n'est pas connecté.")
+            #La commande historique affiche l'historique des messages avec leur date d'envoie.
             elif commande == "historique":
                 afficher_historique()
-
+            #La commande utilisateurs permet d'afficher les utilisateurs connectés au serveur.
             elif commande == "utilisateurs":
                 afficher_utilisateurs_connectes(clients)
         else:
@@ -103,21 +111,29 @@ def com(conn, clients, username):
                 La boucle ici sert à perpétuellement recevoir des messages de la part de n'importe quel client.
                 """
                 try:
+                    #On reçoit les messages de la part de l'utilisateur.
                     message = conn.recv(1024).decode()
+                    #Si ce message est exactement ce code, alors l'utilisateur demande la liste des utilisateur connectés.
                     if message == "A6rafZ5qz66SS0wTHgu3MKQJuJfbzCdu":
+                        #On génère la liste des utilisateurs connectés.
                         utilisateurs_connectes = ", ".join(clients.keys())
+                        #On concatène cette liste dans un message.
                         message = f"{utilisateurs_connectes}"
+                        #On envoie ce message avec un code spécifique afin que le client sache qu'il s'agit de la liste des utilisateurs.
                         conn.send(("9AlaoKX1XBgF4PpOouj5M7ULgShcN0HF " + message).encode())
+                    #Si ce message commence avec ce code, on doit créer un canal customisé avec une liste d'utilisateur.
                     elif message.startswith("8pVYSY6sOEV2LGYgasbtZqk3mM6PO8Hw"):
-                        # Process custom channel creation message
+                        #On individualise les utilisateurs séléctionnés (On les a reçu à la suite du code).
                         parts = message.split(" ", 1)
+                        #On véréfie la bonne syntaxe du message.
                         if len(parts) == 2:
+                            #On utilise la méthode de création de canal customisé avec la liste des clients choisis et la liste des clients connectés (Les deux listes seront comparées).
                             create_custom_channel(parts[1], clients)
                         else:
                             conn.send("Invalid custom channel creation message.".encode())
-                    if message == "quit":
-                        break
-                    broadcast(username, message, clients)
+                    else:
+                        #Si le message n'est pas un message spécifique, alors il peut être envoyé aux utilisateurs (Méthode broadcast).
+                        broadcast(username, message, clients)
                 except (ConnectionResetError, ConnectionAbortedError):
                     break
             deconnexion(username, conn, clients)
