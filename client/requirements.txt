@@ -1,9 +1,0 @@
-import socket
-import threading
-import sys
-import time
-from PyQt6 import *
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QGridLayout, QTextEdit, QCheckBox, QVBoxLayout
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
-from PyQt6.QtGui import QPixmap, QIcon, QGuiApplication, QTextCursor
-import os
