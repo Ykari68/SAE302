@@ -142,7 +142,6 @@ def com(conn, clients, username):
         deconnexion(username, conn, clients)
 
 #Ici je créer toutes mes fonctions.
-
 def afficher_utilisateurs_connectes(clients):
     """
     Cette fonction affiche la liste des utilisateurs connectés.
@@ -152,7 +151,7 @@ def afficher_utilisateurs_connectes(clients):
         print(f"- {username}")
 
 def register(username, password, conn_db):
-    #Ajout d'un utilisateur
+    #Ajout d'un compte utilisateur.
     try:
         nom_utilisateur = username
         mot_de_passe = sha256(password.encode()).hexdigest()  # Hashage du mot de passe
@@ -165,7 +164,7 @@ def register(username, password, conn_db):
         return False
 
 def regadmin(username, password, conn_db):
-    #Ajout d'un utilisateur
+    #Ajout d'un compte administrateur.
     try:
         nom_utilisateur = username
         mot_de_passe = sha256(password.encode()).hexdigest()  # Hashage du mot de passe
@@ -181,16 +180,19 @@ def authentification_user(username, password):
     """
     nom_utilisateur_saisi = username
     mot_de_passe_saisi = sha256(password.encode()).hexdigest()
-
+    #On demande a la base de donnée de nous envoyé le mot de passe (crypté) d'un utilisateur pui on le compare.
     cursor.execute('SELECT * FROM utilisateurs WHERE nom_utilisateur=%s AND mot_de_passe=%s', (nom_utilisateur_saisi, mot_de_passe_saisi))
     utilisateur = cursor.fetchone()
-
+    #Si l'utilisateur et le mot de passe sont cohérents, alors la fonction est Vraie.
     if utilisateur:
         return True
     else:
         return False
 
 def authentification_admin():
+    """
+    Même système, mais la table est différente, il s'agit de la table des compte administrateurs.
+    """
     nom_utilisateur_saisi = input('Nom d\'utilisateur : ')
     mot_de_passe_saisi = sha256(input('Mot de passe : ').encode()).hexdigest()
 
@@ -202,9 +204,12 @@ def authentification_admin():
     else:
         return False
 
-#Les trois prochaines commandes sont des fonctions pour les commandes serveurs.
-    
+#Les trois prochaines commandes sont des fonctions pour les commandes serveurs (kill, kick et ban).
 def kill(clients):
+    """
+    La fonction compte 3 secondes (Modifiable par l'administrateur), puis à la fin du décompte, envoie un message codé que le client reconnaitra. Ce message fermera le client.
+    Ensuite, le serveur se ferme.
+    """
     secondes = 3
     while secondes > 0:
         broadcast("Serveur", f"Le serveur ferme dans {secondes}", clients)
@@ -269,6 +274,9 @@ def deconnexion(username, conn, clients):
         broadcast("Serveur", f"{username} a quitté la discussion.", clients)
 
 def enregistrer_message(sender, message):
+    """
+    Cette fonction enregistre chaque message envoyé dans la base de donner. Cela permettra ensuite d'avoir un historique des messages.
+    """
     try:
         cursor.execute('INSERT INTO historique (sender, message) VALUES (%s, %s)', (sender, message))
         conn_db.commit()
@@ -276,6 +284,9 @@ def enregistrer_message(sender, message):
         print(f"Erreur lors de l'enregistrement du message dans la base de données: {e}")
 
 def afficher_historique():
+    """
+    Cette fonction est appelé après la première connexion d'un utilisateur. Elle affiche les valeurs de la table "historique" de la base de données par orde chronologique dans un format acceptable à envoyer.
+    """
     cursor.execute('SELECT * FROM historique ORDER BY timestamp')
     historique = cursor.fetchall()
 
@@ -283,6 +294,9 @@ def afficher_historique():
         print(f"{ligne[3]} - {ligne[1]}: {ligne[2]}")
 
 def historique(conn):
+    """
+    Cette fonction est appelé après la commande "historique". Elle affiche les valeurs de la table "historique" de la base de données par orde chronologique.
+    """
     cursor.execute('SELECT * FROM historique ORDER BY timestamp')
     historique = cursor.fetchall()
 
@@ -321,11 +335,12 @@ blacklist = set() # La liste des utilisateurs bannis.
 console_thread = threading.Thread(target=console)
 console_thread.start()
 
-#Ici on créer une boucle pour constamment accepté les nouvelles connexions.
+#Ici on créé une boucle pour constamment accepté les nouvelles connexions.
 while True:
     try:
         conn, address = server_socket.accept()
         username = conn.recv(1024).decode()
+        #Si le premier message envoyé commence par ce code, alors le client demande à créer un nouveau compte.
         if username.startswith("FWwCXNb9u3l0E1Ej3OqsRBGlR9zkyHIv"):
                 parts = username.split()
                 if len(parts) >= 3:
@@ -336,7 +351,6 @@ while True:
                         conn.close()
                         continue
                     else:
-                        print("test")
                         conn.send("Compte existant!".encode())
                         continue
         password = conn.recv(1024).decode()
